@@ -57,15 +57,15 @@ function showAuth() {
 }
 
 function showApp() {
-  authView.hidden = true; // ukryj logowanie
-  appView.hidden = false; // pokaż aplikację
+  authView.hidden = true;
+  appView.hidden = false;
 
   currentUserLabel.textContent = `Zalogowano jako: ${
     currentUser.displayId || currentUser.username
   }`;
   adminTab.hidden = !currentUser.isAdmin;
 
-  setActiveView("ranking-view");
+  setActiveView("ranking-view"); // ← tu zmiana
   loadSpecies();
   loadUserCatches();
   loadRanking();
@@ -73,6 +73,7 @@ function showApp() {
     loadInvites();
   }
 }
+
 
 function setActiveView(id) {
   viewSections.forEach((sec) => {
