@@ -530,9 +530,12 @@ async function openUserProfile(uid) {
 
   const catches = [];
   catchesSnap.forEach((doc) => {
-    const c = doc.data();
-    if (c.userId === uid && c.approved) catches.push(c);
-  });
+  const c = doc.data();
+  if (c.userId === uid && c.approved) {
+    catches.push({ id: doc.id, ...c });
+  }
+});
+
 
   // liczymy punkty i zgłoszenia
   const totalPoints = catches.reduce((sum, c) => sum + c.points, 0);
@@ -565,16 +568,39 @@ async function openUserProfile(uid) {
   tbody.innerHTML = "";
 
   catches.forEach((c) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${c.date}</td>
-      <td>${speciesMap[c.speciesId]}</td>
-      <td>${c.length}</td>
-      <td>${c.weight}</td>
-      <td>${c.points}</td>
-    `;
-    tbody.appendChild(tr);
+  const tr = document.createElement("tr");
+
+  tr.innerHTML = `
+    <td>${c.date}</td>
+    <td>${speciesMap[c.speciesId]}</td>
+    <td>${c.length}</td>
+    <td>${c.weight}</td>
+    <td>${c.points}</td>
+    ${
+      currentUser?.isAdmin
+        ? `<td><button class="delete-catch-btn" data-id="${c.id}" style="background:none;border:none;color:#d9534f;font-size:1.2rem;cursor:pointer;">🗑️</button></td>`
+        : ""
+    }
+  `;
+
+  tbody.appendChild(tr);
+});
+
+  if (currentUser?.isAdmin) {
+  document.querySelectorAll(".delete-catch-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+
+      if (!confirm("Czy na pewno chcesz usunąć to zgłoszenie?")) return;
+
+      await db.collection("catches").doc(id).delete();
+
+      openUserProfile(uid); // odśwież profil po usunięciu
+      loadRanking();        // ranking musi się zaktualizować
+    });
   });
+}
+
 
   // przełączamy widok
   setActiveView("profile-view");
