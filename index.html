@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <title>Fishing League</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/icon-192.png" />
+  </head>
+  <body>
+    <main>
+      <!-- WIDOK LOGOWANIA / REJESTRACJI -->
+      <section id="auth-view">
+        <div class="card" id="login-card">
+          <h2>Logowanie</h2>
+          <form id="login-form">
+            <label>
+              Email
+              <input type="email" id="login-username" required />
+            </label>
+            <label>
+              Hasło
+              <input type="password" id="login-password" required />
+            </label>
+            <button type="submit" class="btn primary">Zaloguj</button>
+          </form>
+          <button id="show-register" class="btn primary">
+            Nie masz konta? Zarejestruj się
+          </button>
+        </div>
+
+        <div class="card" id="register-card" hidden>
+          <h2>Rejestracja</h2>
+          <form id="register-form">
+            <label>
+              Email
+              <input type="email" id="reg-username" required />
+            </label>
+            <label>
+              Hasło
+              <input type="password" id="reg-password" required />
+            </label>
+            <label>
+              ID zawodnika
+              <input type="text" id="reg-displayid" required />
+            </label>
+
+            <label>
+              Token zaproszenia
+              <input type="text" id="reg-token" required />
+            </label>
+            <button type="submit" class="btn primary">Utwórz konto</button>
+          </form>
+          <button id="back-to-login" class="btn primary">
+            Masz już konto? Zaloguj się
+          </button>
+        </div>
+      </section>
+
+      <!-- WIDOK APLIKACJI -->
+      <section id="app-view" hidden>
+        <header class="top-bar">
+          <span id="current-user-label"></span>
+          <button id="logout-btn" class="btn primary">Wyloguj</button>
+        </header>
+
+        <nav class="nav">
+          <button class="nav-btn" data-view="catches-view">Zgłoszenia</button>
+          <button class="nav-btn" data-view="ranking-view">Ranking</button>
+          <button class="nav-btn" data-view="users-view">Uczestnicy</button>
+          <button class="nav-btn" data-view="admin-view" id="admin-tab" hidden>
+            Admin
+          </button>
+        </nav>
+
+        <!-- ZGŁOSZENIA -->
+        <section id="catches-view" class="view-section">
+          <div class="card">
+            <h2>Dodaj zgłoszenie</h2>
+            <form id="catch-form">
+              <label>
+                Gatunek
+                <select id="catch-species"></select>
+              </label>
+              <label>
+                Długość (cm)
+                <input type="number" step="0.1" id="catch-length" required />
+              </label>
+              <label>
+                Waga (kg)
+                <input type="number" step="0.01" id="catch-weight" required />
+              </label>
+              <label>
+                Data
+                <input type="date" id="catch-date" required />
+              </label>
+              <button type="submit" class="btn primary">
+                Zapisz zgłoszenie
+              </button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Twoje zgłoszenia</h2>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Gatunek</th>
+                    <th>Długość (cm)</th>
+                    <th>Waga (kg)</th>
+                    <th>Punkty</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="user-catches-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- RANKING -->
+        <section id="ranking-view" class="view-section" hidden>
+          <div class="card">
+            <h2>Ranking</h2>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Miejsce</th>
+                    <th>Zawodnik</th>
+                    <th>Punkty</th>
+                    <th>Liczba zgłoszeń</th>
+                  </tr>
+                </thead>
+                <tbody id="ranking-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="profile-view" class="view-section" hidden>
+          <div class="card">
+            <h2 id="profile-name"></h2>
+            <p>
+              <strong>Miejsce w rankingu:</strong>
+              <span id="profile-rank"></span>
+            </p>
+            <p><strong>Punkty:</strong> <span id="profile-points"></span></p>
+            <p><strong>Zgłoszenia:</strong> <span id="profile-count"></span></p>
+          </div>
+
+          <div class="card">
+            <h3>Zgłoszenia zawodnika</h3>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Gatunek</th>
+                    <th>Długość</th>
+                    <th>Waga</th>
+                    <th>Punkty</th>
+                  </tr>
+                </thead>
+                <tbody id="profile-catches"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!--UCZESTNICY-->
+        <section id="users-view" class="view-section" hidden>
+          <div class="card">
+            <h2>Uczestnicy</h2>
+
+            <div id="users-grid" class="users-grid"></div>
+          </div>
+        </section>
+
+        <!-- ADMIN -->
+        <section id="admin-view" class="view-section" hidden>
+          <div class="card">
+            <h2>Tokeny zaproszeń</h2>
+            <button id="generate-token-btn" class="btn primary">
+              Wygeneruj token
+            </button>
+
+            <div class="table-wrapper" style="margin-top: 1rem">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Token</th>
+                    <th>Użyty</th>
+                    <th>Link</th>
+                  </tr>
+                </thead>
+                <tbody id="invites-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Zgłoszenia do zatwierdzenia</h2>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Gatunek</th>
+                    <th>Długość</th>
+                    <th>Waga</th>
+                    <th>Punkty</th>
+                    <th>Akcja</th>
+                  </tr>
+                </thead>
+                <tbody id="pending-catches-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Gatunki ryb</h2>
+            <form id="species-form">
+              <label>
+                Nazwa gatunku
+                <input type="text" id="species-name" required />
+              </label>
+              <label>
+                Punkty rzadkości
+                <input type="number" id="species-rarity" required />
+              </label>
+              <button type="submit" class="btn primary">Dodaj gatunek</button>
+            </form>
+
+            <div class="table-wrapper" style="margin-top: 1rem">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nazwa</th>
+                    <th>Punkty</th>
+                  </tr>
+                </thead>
+                <tbody id="species-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCnObP6RbDOa1EEM5pis7tF6dV70tzgAuc",
+        authDomain: "fishing-league-b77e7.firebaseapp.com",
+        projectId: "fishing-league-b77e7",
+        storageBucket: "fishing-league-b77e7.firebasestorage.app",
+        messagingSenderId: "1056946734839",
+        appId: "1:1056946734839:web:d7c399d19f0ee3036ef5f2",
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+    </script>
+
+    <script src="app.js"></script>
+  </body>
+</html>
