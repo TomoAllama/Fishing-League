@@ -34,6 +34,7 @@ body {
 body {
   font-family: var(--font-main);
   background: radial-gradient(circle at top, #282828 0, #020808 55%);
+  position; fixed;
   color: var(--text);
   display: block;
   justify-content: center;
