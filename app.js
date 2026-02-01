@@ -107,7 +107,13 @@ async function loadPendingCatches() {
       <td>${c.length}</td>
       <td>${c.weight}</td>
       <td>${c.points}</td>
-      <td><button class="approve-btn" data-id="${doc.id}">✔</button></td>
+      <td>
+        <div class="action-buttons">
+          <button class="approve-btn" data-id="${doc.id}">✔</button>
+          <button class="reject-btn" data-id="${doc.id}">✖</button>
+        </div>
+      </td>
+
 
     `;
 
@@ -123,6 +129,17 @@ async function loadPendingCatches() {
     });
   });
 }
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".reject-btn");
+  if (!btn) return;
+
+  const id = btn.dataset.id;
+
+  if (confirm("Na pewno odrzucić zgłoszenie?")) {
+    await db.collection("catches").doc(id).delete();
+    loadPendingCatches();
+  }
+});
 
 // =====================================
 // LOGOWANIE / REJESTRACJA
@@ -691,4 +708,3 @@ auth.onAuthStateChanged(async (user) => {
   showAuth();
   handleInviteFromUrl();
 });
-
