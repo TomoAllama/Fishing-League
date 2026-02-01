@@ -34,7 +34,6 @@ body {
 body {
   font-family: var(--font-main);
   background: radial-gradient(circle at top, #282828 0, #020808 55%);
-  position; fixed;
   color: var(--text);
   display: block;
   justify-content: center;
@@ -163,6 +162,15 @@ body > * {
   margin-bottom: 0.8rem;
 }
 
+.card > .nav1 {
+  margin-top: -1.4rem;
+  margin-left: -1.6rem;
+  margin-right: -1.6rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
 /* Forms */
 
 form {
@@ -199,6 +207,31 @@ select:focus {
 
 /* Buttons */
 
+.approve-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.15s;
+}
+
+.approve-btn:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+  transform: scale(1.1);
+}
+
+.approve-btn:active {
+  transform: scale(1);
+}
+
 #logout-btn {
   width: auto !important;
   display: inline-block !important;
@@ -216,6 +249,33 @@ select:focus {
   font-size: 0.95rem;
   transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
   opacity: 1;
+}
+.nav1 {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.folder-btn {
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  padding: 0.6rem 1rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.folder-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.folder-btn.active {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border-bottom: 2px solid var(--accent);
 }
 
 .btn.primary {
