@@ -303,6 +303,134 @@ folderBtns.forEach((btn) => {
   });
 });
 
+document.getElementById("btn-info").addEventListener("click", () => {
+  showView("info-view");
+});
+
+document.getElementById("btn-main").addEventListener("click", () => {
+  showView("main-view");
+});
+
+function showView(viewId) {
+  document.querySelectorAll(".view-section").forEach((sec) => {
+    sec.hidden = sec.id !== viewId;
+  });
+
+  if (viewId === "info-view") {
+    loadWeather();
+    loadMoon();
+    loadFishActivity();
+  }
+}
+
+// =====================================
+// POGODA
+// =====================================
+async function loadWeather() {
+  const url =
+    "https://api.open-meteo.com/v1/forecast?latitude=51.2645&longitude=15.5697&current=temperature_2m,wind_speed_10m,precipitation,weather_code";
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const w = data.current;
+
+  document.getElementById("weather-box").innerHTML = `
+    <strong>Temperatura:</strong> ${w.temperature_2m}°C<br>
+    <strong>Wiatr:</strong> ${w.wind_speed_10m} km/h<br>
+    <strong>Opady:</strong> ${w.precipitation} mm<br>
+  `;
+}
+// =====================================
+// FAZA
+// =====================================
+async function loadMoon() {
+  const today = new Date().toISOString().split("T")[0];
+
+  const url = `https://api.weatherapi.com/v1/astronomy.json?key=c13a9d52a5f94490b54121129260102&q=Boleslawiec&dt=${today}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (!data.astronomy || !data.astronomy.astro) {
+    document.getElementById("moon-box").innerHTML =
+      "Błąd pobierania danych księżyca.";
+    return;
+  }
+
+  const astro = data.astronomy.astro;
+
+  const phaseName = astro.moon_phase;
+  const illumination = astro.moon_illumination;
+
+  // Ikony dopasowane do nazw faz
+  const iconMap = {
+    "New Moon": "🌑",
+    "Waxing Crescent": "🌒",
+    "First Quarter": "🌓",
+    "Waxing Gibbous": "🌔",
+    "Full Moon": "🌕",
+    "Waning Gibbous": "🌖",
+    "Last Quarter": "🌗",
+    "Waning Crescent": "🌘",
+  };
+
+  const icon = iconMap[phaseName] || "🌙";
+
+  document.getElementById("moon-box").innerHTML = `
+    <div style="font-size:2rem">${icon}</div>
+    <strong>Faza:</strong> ${phaseName}<br>
+    <strong>Oświetlenie:</strong> ${illumination}%
+  `;
+}
+
+// =====================================
+// BRANIA
+// =====================================
+async function loadFishActivity() {
+  const today = new Date().toISOString().split("T")[0];
+
+  const weatherUrl = `https://api.weatherapi.com/v1/current.json?key=c13a9d52a5f94490b54121129260102&q=Boleslawiec`;
+
+  const moonUrl = `https://api.weatherapi.com/v1/astronomy.json?key=c13a9d52a5f94490b54121129260102&q=Boleslawiec&dt=${today}`;
+
+  try {
+    const [wRes, mRes] = await Promise.all([fetch(weatherUrl), fetch(moonUrl)]);
+
+    const w = await wRes.json();
+    const m = await mRes.json();
+
+    if (!w.current || !m.astronomy?.astro) {
+      document.getElementById("fish-box").innerHTML =
+        "Błąd pobierania kalendarza brań.";
+      return;
+    }
+
+    const temp = w.current.temp_c;
+    const wind = w.current.wind_kph;
+    const illumination = Number(m.astronomy.astro.moon_illumination) / 100;
+
+    const score = calculateFishActivity(temp, wind, illumination);
+
+    document.getElementById("fish-box").innerHTML = `
+      <div class="fish-stars">${"★".repeat(score)}${"☆".repeat(5 - score)}</div>
+    `;
+  } catch (err) {
+    document.getElementById("fish-box").innerHTML =
+      "Błąd pobierania kalendarza brań.";
+  }
+}
+
+function calculateFishActivity(temp, wind, moonPhase) {
+  let score = 0;
+
+  if (temp >= 8 && temp <= 20) score += 2;
+  if (wind <= 10) score += 1;
+  if (moonPhase > 0.45 && moonPhase < 0.65) score += 2;
+
+  return Math.min(score, 5);
+}
+
 // =====================================
 // GATUNKI
 // =====================================
