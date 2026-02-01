@@ -7,11 +7,6 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/icon-192.png" />
-    <link rel="apple-touch-icon" sizes="120x120" href="icon-192.png">
-<link rel="apple-touch-icon" sizes="152x152" href="icon-192.png">
-<link rel="apple-touch-icon" sizes="167x167" href="icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-
   </head>
   <body>
     <main>
@@ -71,8 +66,8 @@
         </header>
 
         <nav class="nav">
-          <button class="nav-btn" data-view="ranking-view">Ranking</button>
           <button class="nav-btn" data-view="catches-view">Zgłoszenia</button>
+          <button class="nav-btn" data-view="ranking-view">Ranking</button>
           <button class="nav-btn" data-view="users-view">Uczestnicy</button>
           <button class="nav-btn" data-view="admin-view" id="admin-tab" hidden>
             Admin
@@ -94,7 +89,7 @@
               </label>
               <label>
                 Waga (kg)
-                <input type="number" step="0.01" id="catch-weight" />
+                <input type="number" step="0.01" id="catch-weight" required />
               </label>
               <label>
                 Data
@@ -187,26 +182,55 @@
 
         <!-- ADMIN -->
         <section id="admin-view" class="view-section" hidden>
-          <div class="card">
-            <h2>Tokeny zaproszeń</h2>
-            <button id="generate-token-btn" class="btn primary">
-              Wygeneruj token
-            </button>
 
-            <div class="table-wrapper" style="margin-top: 1rem">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Token</th>
-                    <th>Użyty</th>
-                    <th>Link</th>
-                  </tr>
-                </thead>
-                <tbody id="invites-body"></tbody>
-              </table>
+          <!-- TOKENY -->
+          
+          <div class="card">
+            <nav class="nav1">
+              <button class="folder-btn active" data-group="tokens" data-target="active-tokens">
+                Aktywne tokeny
+              </button>
+              <button class="folder-btn" data-group="tokens" data-target="used-tokens">
+                Użyte tokeny
+              </button>
+            </nav>
+            
+        
+            <!-- AKTYWNE TOKENY -->
+            <div id="active-tokens" class="tab-section" data-group="tokens">
+              <button id="generate-token-btn" class="btn primary">Wygeneruj token</button>
+        
+              <div class="table-wrapper" style="margin-top: 1rem">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Token</th>
+                      <th>Użyty</th>
+                      <th>Link</th>
+                    </tr>
+                  </thead>
+                  <tbody id="invites-body"></tbody>
+                </table>
+              </div>
+            </div>
+        
+            <!-- UŻYTE TOKENY -->
+            <div id="used-tokens" class="tab-section" data-group="tokens" hidden>
+              <div class="table-wrapper" style="margin-top: 1rem">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Token</th>
+                      <th>Data użycia</th>
+                    </tr>
+                  </thead>
+                  <tbody id="used-invites-body"></tbody>
+                </table>
+              </div>
             </div>
           </div>
-
+        
+          <!-- ZGŁOSZENIA DO ZATWIERDZENIA -->
           <div class="card">
             <h2>Zgłoszenia do zatwierdzenia</h2>
             <div class="table-wrapper">
@@ -225,35 +249,56 @@
               </table>
             </div>
           </div>
+        
+          <!-- GATUNKI -->
+         
 
           <div class="card">
-            <h2>Gatunki ryb</h2>
-            <form id="species-form">
-              <label>
-                Nazwa gatunku
-                <input type="text" id="species-name" required />
-              </label>
-              <label>
-                Punkty rzadkości
-                <input type="number" id="species-rarity" required />
-              </label>
-              <button type="submit" class="btn primary">Dodaj gatunek</button>
-            </form>
-
-            <div class="table-wrapper" style="margin-top: 1rem">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Nazwa</th>
-                    <th>Punkty</th>
-                  </tr>
-                </thead>
-                <tbody id="species-body"></tbody>
-              </table>
+            <nav class="nav1">
+              <button class="folder-btn active" data-group="species" data-target="species-form-card">
+                Dodaj gatunek
+              </button>
+              <button class="folder-btn" data-group="species" data-target="species-list-card">
+                Lista gatunków
+              </button>
+            </nav>
+        
+            <!-- FORMULARZ DODAWANIA GATUNKU -->
+            <div id="species-form-card" class="tab-section" data-group="species">
+              <form id="species-form">
+                <label>
+                  Nazwa gatunku
+                  <input type="text" id="species-name" required />
+                </label>
+                <label>
+                  Punkty rzadkości
+                  <input type="number" id="species-rarity" required />
+                </label>
+                <button type="submit" class="btn primary">Dodaj gatunek</button>
+              </form>
+            </div>
+        
+            <!-- LISTA GATUNKÓW -->
+            <div id="species-list-card" class="tab-section" data-group="species" hidden>
+              <div class="table-wrapper" style="margin-top: 1rem">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nazwa</th>
+                      <th>Punkty</th>
+                    </tr>
+                  </thead>
+                  <tbody id="species-body"></tbody>
+                </table>
+              </div>
             </div>
           </div>
+        
         </section>
-      </section>
+        
+        
+        
+        
     </main>
 
     <!-- Firebase SDK -->
