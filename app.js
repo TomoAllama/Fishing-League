@@ -57,15 +57,15 @@ function showAuth() {
 }
 
 function showApp() {
-  authView.hidden = true;
-  appView.hidden = false;
+  authView.hidden = true; // ukryj logowanie
+  appView.hidden = false; // pokaż aplikację
 
   currentUserLabel.textContent = `Zalogowano jako: ${
     currentUser.displayId || currentUser.username
   }`;
   adminTab.hidden = !currentUser.isAdmin;
 
-  setActiveView("ranking-view"); // ← tu zmiana
+  setActiveView("catches-view");
   loadSpecies();
   loadUserCatches();
   loadRanking();
@@ -73,7 +73,6 @@ function showApp() {
     loadInvites();
   }
 }
-
 
 function setActiveView(id) {
   viewSections.forEach((sec) => {
@@ -108,9 +107,8 @@ async function loadPendingCatches() {
       <td>${c.length}</td>
       <td>${c.weight}</td>
       <td>${c.points}</td>
-      <td><button class="btn primary approve-btn" data-id="${
-        doc.id
-      }">Zatwierdź</button></td
+      <td><button class="approve-btn" data-id="${doc.id}">✔</button></td>
+
     `;
 
     pendingCatchesBody.appendChild(tr);
@@ -238,6 +236,53 @@ navButtons.forEach((btn) => {
       loadPendingCatches();
     }
     if (btn.dataset.view === "users-view") loadUsers();
+  });
+});
+
+const folderButtons = document.querySelectorAll(".folder-btn");
+const adminBlocks = document.querySelectorAll(".admin-block");
+
+folderButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const group = btn.dataset.group;
+    const targetId = btn.dataset.target;
+
+    // aktywny przycisk w danej grupie
+    folderButtons.forEach((b) => {
+      if (b.dataset.group === group) {
+        b.classList.toggle("active", b === btn);
+      }
+    });
+
+    // pokazujemy tylko kartę z danej grupy
+    adminBlocks.forEach((block) => {
+      if (block.dataset.group === group) {
+        block.hidden = block.id !== targetId;
+      }
+    });
+  });
+});
+
+const folderBtns = document.querySelectorAll(".folder-btn");
+
+folderBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const group = btn.dataset.group;
+    const target = btn.dataset.target;
+
+    // aktywny przycisk w danej grupie
+    folderBtns.forEach((b) => {
+      if (b.dataset.group === group) {
+        b.classList.toggle("active", b === btn);
+      }
+    });
+
+    // pokazujemy tylko sekcje zakładek (NIE przyciski!)
+    document
+      .querySelectorAll(`.tab-section[data-group="${group}"]`)
+      .forEach((sec) => {
+        sec.hidden = sec.id !== target;
+      });
   });
 });
 
@@ -447,7 +492,13 @@ generateTokenBtn.addEventListener("click", () => {
 
 async function loadInvites() {
   const snap = await db.collection("invites").get();
+
+  // aktywne tokeny
   invitesBody.innerHTML = "";
+
+  // użyte tokeny
+  const usedBody = document.getElementById("used-invites-body");
+  usedBody.innerHTML = "";
 
   const baseUrl = window.location.origin + window.location.pathname;
 
@@ -456,12 +507,24 @@ async function loadInvites() {
     const token = doc.id;
     const link = `${baseUrl}?invite=${token}`;
 
+    // UŻYTE TOKENY
+    if (data.used) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${token}</td>
+        <td>${data.createdAt || "-"}</td>
+      `;
+      usedBody.appendChild(tr);
+      return; // ważne: nie dodajemy ich do listy aktywnych
+    }
+
+    // AKTYWNE TOKENY
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${token}</td>
-      <td>${data.used ? "tak" : "nie"}</td>
+      <td>nie</td>
       <td>
-        <button class="btn primary" data-link="${link}">Kopiuj link</button>
+        <button class="copy-btn btn primary" data-link="${link}">Kopiuj link</button>
       </td>
     `;
     invitesBody.appendChild(tr);
@@ -530,12 +593,11 @@ async function openUserProfile(uid) {
 
   const catches = [];
   catchesSnap.forEach((doc) => {
-  const c = doc.data();
-  if (c.userId === uid && c.approved) {
-    catches.push({ id: doc.id, ...c });
-  }
-});
-
+    const c = doc.data();
+    if (c.userId === uid && c.approved) {
+      catches.push({ id: doc.id, ...c });
+    }
+  });
 
   // liczymy punkty i zgłoszenia
   const totalPoints = catches.reduce((sum, c) => sum + c.points, 0);
@@ -568,39 +630,38 @@ async function openUserProfile(uid) {
   tbody.innerHTML = "";
 
   catches.forEach((c) => {
-  const tr = document.createElement("tr");
+    const tr = document.createElement("tr");
 
-  tr.innerHTML = `
-    <td>${c.date}</td>
-    <td>${speciesMap[c.speciesId]}</td>
-    <td>${c.length}</td>
-    <td>${c.weight}</td>
-    <td>${c.points}</td>
-    ${
-      currentUser?.isAdmin
-        ? `<td><button class="delete-catch-btn" data-id="${c.id}" style="background:none;border:none;color:#d9534f;font-size:1.2rem;cursor:pointer;">🗑️</button></td>`
-        : ""
+    tr.innerHTML = `
+      <td>${c.date}</td>
+      <td>${speciesMap[c.speciesId]}</td>
+      <td>${c.length}</td>
+      <td>${c.weight}</td>
+      <td>${c.points}</td>
+      ${
+        currentUser?.isAdmin
+          ? `<td><button class="delete-catch-btn" data-id="${c.id}" style="background:none;border:none;color:#d9534f;font-size:1.2rem;cursor:pointer;">🗑️</button></td>`
+          : ""
+      }
+    `;
+
+    tbody.appendChild(tr);
+
+    if (currentUser?.isAdmin) {
+      document.querySelectorAll(".delete-catch-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.dataset.id;
+
+          if (!confirm("Czy na pewno chcesz usunąć to zgłoszenie?")) return;
+
+          await db.collection("catches").doc(id).delete();
+
+          openUserProfile(uid); // odśwież profil po usunięciu
+          loadRanking(); // ranking musi się zaktualizować
+        });
+      });
     }
-  `;
-
-  tbody.appendChild(tr);
-});
-
-  if (currentUser?.isAdmin) {
-  document.querySelectorAll(".delete-catch-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-
-      if (!confirm("Czy na pewno chcesz usunąć to zgłoszenie?")) return;
-
-      await db.collection("catches").doc(id).delete();
-
-      openUserProfile(uid); // odśwież profil po usunięciu
-      loadRanking();        // ranking musi się zaktualizować
-    });
   });
-}
-
 
   // przełączamy widok
   setActiveView("profile-view");
@@ -630,3 +691,4 @@ auth.onAuthStateChanged(async (user) => {
   showAuth();
   handleInviteFromUrl();
 });
+
