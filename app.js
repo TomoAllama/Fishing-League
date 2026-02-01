@@ -65,7 +65,7 @@ function showApp() {
   }`;
   adminTab.hidden = !currentUser.isAdmin;
 
-  setActiveView("catches-view");
+  setActiveView("ranking-view");
   loadSpecies();
   loadUserCatches();
   loadRanking();
