@@ -307,10 +307,6 @@ document.getElementById("btn-info").addEventListener("click", () => {
   showView("info-view");
 });
 
-document.getElementById("btn-main").addEventListener("click", () => {
-  showView("main-view");
-});
-
 function showView(viewId) {
   document.querySelectorAll(".view-section").forEach((sec) => {
     sec.hidden = sec.id !== viewId;
@@ -490,6 +486,8 @@ speciesForm.addEventListener("submit", async (e) => {
 // =====================================
 catchForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  console.log("SUBMIT CATCH — currentUser:", currentUser);
 
   const speciesId = catchSpeciesSelect.value;
   const length = Number(catchLength.value);
@@ -816,6 +814,10 @@ async function openUserProfile(uid) {
 // START – NASŁUCH STANU AUTH
 // =====================================
 auth.onAuthStateChanged(async (user) => {
+  console.log("AUTH STATE CHANGED:", user);
+  console.log("CURRENT USER BEFORE:", currentUser);
+  console.log("STACK TRACE:", new Error().stack);
+
   if (user) {
     const userDoc = await db.collection("users").doc(user.uid).get();
 
