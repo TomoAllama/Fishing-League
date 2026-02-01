@@ -220,6 +220,7 @@ select:focus {
   align-items: center;
   justify-content: center;
   transition: 0.15s;
+  margin-right: 6px;
 }
 
 .approve-btn:hover {
@@ -230,6 +231,38 @@ select:focus {
 
 .approve-btn:active {
   transform: scale(1);
+}
+
+.reject-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #b33a3a;
+  background: #b33a3a;
+  color: #000;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.15s;
+  margin-left: 6px; /* odstęp od approve-btn */
+}
+
+.reject-btn:hover {
+  background: #000;
+  color: #b33a3a;
+  transform: scale(1.1);
+}
+
+.reject-btn:active {
+  transform: scale(1);
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* odstęp między guzikami */
 }
 
 #logout-btn {
