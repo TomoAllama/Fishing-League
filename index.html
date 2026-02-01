@@ -7,11 +7,11 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="icon-192.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="icon-512.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="icon-512.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="icon-512.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   </head>
   <body>
     <main>
@@ -50,7 +50,6 @@
               ID zawodnika
               <input type="text" id="reg-displayid" required />
             </label>
-
             <label>
               Token zaproszenia
               <input type="text" id="reg-token" required />
@@ -146,6 +145,7 @@
           </div>
         </section>
 
+        <!-- PROFIL -->
         <section id="profile-view" class="view-section" hidden>
           <div class="card">
             <h2 id="profile-name"></h2>
@@ -176,35 +176,38 @@
           </div>
         </section>
 
-        <!--UCZESTNICY-->
+        <!-- UCZESTNICY -->
         <section id="users-view" class="view-section" hidden>
           <div class="card">
             <h2>Uczestnicy</h2>
-
             <div id="users-grid" class="users-grid"></div>
           </div>
         </section>
 
         <!-- ADMIN -->
         <section id="admin-view" class="view-section" hidden>
-
-          <!-- TOKENY -->
-          
           <div class="card">
             <nav class="nav1">
-              <button class="folder-btn active" data-group="tokens" data-target="active-tokens">
+              <button
+                class="folder-btn active"
+                data-group="tokens"
+                data-target="active-tokens"
+              >
                 Aktywne tokeny
               </button>
-              <button class="folder-btn" data-group="tokens" data-target="used-tokens">
+              <button
+                class="folder-btn"
+                data-group="tokens"
+                data-target="used-tokens"
+              >
                 Użyte tokeny
               </button>
             </nav>
-            
-        
-            <!-- AKTYWNE TOKENY -->
+
             <div id="active-tokens" class="tab-section" data-group="tokens">
-              <button id="generate-token-btn" class="btn primary">Wygeneruj token</button>
-        
+              <button id="generate-token-btn" class="btn primary">
+                Wygeneruj token
+              </button>
               <div class="table-wrapper" style="margin-top: 1rem">
                 <table>
                   <thead>
@@ -218,9 +221,13 @@
                 </table>
               </div>
             </div>
-        
-            <!-- UŻYTE TOKENY -->
-            <div id="used-tokens" class="tab-section" data-group="tokens" hidden>
+
+            <div
+              id="used-tokens"
+              class="tab-section"
+              data-group="tokens"
+              hidden
+            >
               <div class="table-wrapper" style="margin-top: 1rem">
                 <table>
                   <thead>
@@ -234,8 +241,7 @@
               </div>
             </div>
           </div>
-        
-          <!-- ZGŁOSZENIA DO ZATWIERDZENIA -->
+
           <div class="card">
             <h2>Zgłoszenia do zatwierdzenia</h2>
             <div class="table-wrapper">
@@ -254,22 +260,30 @@
               </table>
             </div>
           </div>
-        
-          <!-- GATUNKI -->
-         
 
           <div class="card">
             <nav class="nav1">
-              <button class="folder-btn active" data-group="species" data-target="species-form-card">
+              <button
+                class="folder-btn active"
+                data-group="species"
+                data-target="species-form-card"
+              >
                 Dodaj gatunek
               </button>
-              <button class="folder-btn" data-group="species" data-target="species-list-card">
+              <button
+                class="folder-btn"
+                data-group="species"
+                data-target="species-list-card"
+              >
                 Lista gatunków
               </button>
             </nav>
-        
-            <!-- FORMULARZ DODAWANIA GATUNKU -->
-            <div id="species-form-card" class="tab-section" data-group="species">
+
+            <div
+              id="species-form-card"
+              class="tab-section"
+              data-group="species"
+            >
               <form id="species-form">
                 <label>
                   Nazwa gatunku
@@ -282,9 +296,13 @@
                 <button type="submit" class="btn primary">Dodaj gatunek</button>
               </form>
             </div>
-        
-            <!-- LISTA GATUNKÓW -->
-            <div id="species-list-card" class="tab-section" data-group="species" hidden>
+
+            <div
+              id="species-list-card"
+              class="tab-section"
+              data-group="species"
+              hidden
+            >
               <div class="table-wrapper" style="margin-top: 1rem">
                 <table>
                   <thead>
@@ -298,33 +316,30 @@
               </div>
             </div>
           </div>
-        
         </section>
 
+        <!-- INFO PANEL -->
         <section id="info-view" class="view-section" hidden>
           <div class="card">
             <h2>Pogoda — Bolesławiec</h2>
             <div id="weather-box" class="info-box">Ładowanie pogody…</div>
           </div>
-        
+
           <div class="card">
             <h2>Faza księżyca</h2>
             <div id="moon-box" class="info-box">Ładowanie danych księżyca…</div>
           </div>
-        
+
           <div class="card">
             <h2>Kalendarz brań</h2>
             <div id="fish-box" class="info-box">Ładowanie kalendarza brań…</div>
           </div>
         </section>
-        
-        
+
         <div class="floating-nav">
           <button id="btn-info" class="nav-circle">ℹ</button>
         </div>
-        
-        
-        
+      </section>
     </main>
 
     <!-- Firebase SDK -->
