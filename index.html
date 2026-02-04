@@ -73,6 +73,8 @@
           <button class="nav-btn" data-view="catches-view">Zgłoszenia</button>
           <button class="nav-btn" data-view="ranking-view">Ranking</button>
           <button class="nav-btn" data-view="users-view">Uczestnicy</button>
+          
+
           <button class="nav-btn" data-view="admin-view" id="admin-tab" hidden>
             Admin
           </button>
@@ -319,28 +321,49 @@
         </section>
 
         <!-- INFO PANEL -->
-        <section id="info-view" class="view-section" hidden>
-          <div class="card">
-            <h2>Pogoda — Bolesławiec</h2>
-            <div id="weather-box" class="info-box">Ładowanie pogody…</div>
-          </div>
+        
 
-          <div class="card">
-            <h2>Faza księżyca</h2>
-            <div id="moon-box" class="info-box">Ładowanie danych księżyca…</div>
-          </div>
+      <!-- WHEATHER WIDGET TEST-->
+      <div class="nav-circle" data-view="weather-widget-view">🌤️</div>
 
-          <div class="card">
-            <h2>Kalendarz brań</h2>
-            <div id="fish-box" class="info-box">Ładowanie kalendarza brań…</div>
+      <section id="weather-widget-view" class="view-section" hidden>
+        <div class="card">
+          <h2>Aktualne warunki – Bolesławiec</h2>
+      
+          <div class="weather-header">
+            <div id="w-icon" class="weather-icon"></div>
+            <div id="w-moon-icon" class="moon-icon"></div>
           </div>
-        </section>
-
-        <div class="floating-nav">
-          <button id="btn-info" class="nav-circle">ℹ</button>
+      
+          <div class="weather-grid">
+            <div>
+              <p><strong>Temperatura:</strong> <span id="w-temp"></span></p>
+              <p><strong>Odczuwalna:</strong> <span id="w-feels"></span></p>
+              <p><strong>Wiatr:</strong> <span id="w-wind"></span></p>
+              <p><strong>Kierunek:</strong> <span id="w-winddir"></span></p>
+            </div>
+      
+            <div>
+              <p><strong>Ciśnienie:</strong> <span id="w-pressure"></span></p>
+              <p><strong>Wilgotność:</strong> <span id="w-humidity"></span></p>
+              <p><strong>Zachmurzenie:</strong> <span id="w-cloud"></span></p>
+              <p><strong>Widoczność:</strong> <span id="w-visibility"></span></p>
+            </div>
+          </div>
+      
+          <p><strong>Punkt rosy:</strong> <span id="w-dew"></span></p>
+      
+          <hr class="weather-divider">
+      
+          <p><strong>Faza księżyca:</strong> <span id="w-moon"></span></p>
+          <p><strong>Aktywność ryb:</strong> <span id="w-fish"></span></p>
+      
+          <hr class="weather-divider">
+      
+          <canvas id="w-hourly-chart" height="80"></canvas>
         </div>
       </section>
-    </main>
+          </main>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -361,7 +384,7 @@
       const auth = firebase.auth();
       const db = firebase.firestore();
     </script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
