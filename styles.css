@@ -15,6 +15,36 @@
     sans-serif;
 }
 
+/* CSS testowy */
+.weather-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.weather-icon {
+  font-size: 3rem;
+}
+
+.moon-icon {
+  font-size: 3rem;
+}
+
+.weather-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+}
+
+.weather-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1rem 0;
+}
+
+/* koniec testu */
+
 *,
 *::before {
   box-sizing: border-box;
@@ -402,6 +432,9 @@ select:focus {
 }
 
 .nav-circle {
+  position: fixed;
+  bottom: 30px;
+  left: 20px;
   width: 52px;
   height: 52px;
   border-radius: 50%;
@@ -410,6 +443,7 @@ select:focus {
   color: var(--text);
   font-size: 1.4rem;
   display: flex;
+
   align-items: center;
   justify-content: center;
   cursor: pointer;
