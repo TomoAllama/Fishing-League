@@ -47,6 +47,7 @@ const invitesBody = document.getElementById("invites-body");
 // STAN
 // =====================================
 let currentUser = null;
+let weatherWidgetLoaded = false;
 
 // =====================================
 // WIDOKI
@@ -253,6 +254,19 @@ navButtons.forEach((btn) => {
       loadPendingCatches();
     }
     if (btn.dataset.view === "users-view") loadUsers();
+
+    if (btn.dataset.view === "weather-widget-view") {
+      loadWeatherWidget();
+    }
+  });
+});
+document.querySelectorAll(".nav-circle[data-view]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    setActiveView(btn.dataset.view);
+
+    if (btn.dataset.view === "weather-widget-view") {
+      loadWeatherWidget();
+    }
   });
 });
 
@@ -294,17 +308,13 @@ folderBtns.forEach((btn) => {
       }
     });
 
-    // pokazujemy tylko sekcje zakładek (NIE przyciski!)
+    // pokazuje tylko sekcje zakładek (NIE przyciski!)
     document
       .querySelectorAll(`.tab-section[data-group="${group}"]`)
       .forEach((sec) => {
         sec.hidden = sec.id !== target;
       });
   });
-});
-
-document.getElementById("btn-info").addEventListener("click", () => {
-  showView("info-view");
 });
 
 function showView(viewId) {
@@ -319,113 +329,157 @@ function showView(viewId) {
   }
 }
 
-// =====================================
-// POGODA
-// =====================================
-async function loadWeather() {
-  const url =
-    "https://api.open-meteo.com/v1/forecast?latitude=51.2645&longitude=15.5697&current=temperature_2m,wind_speed_10m,precipitation,weather_code";
+// ===============================
+// WIDŻET POGODA
+// ===============================
 
-  const res = await fetch(url);
-  const data = await res.json();
+function loadWeatherWidget() {
+  if (weatherWidgetLoaded) return;
+  weatherWidgetLoaded = true;
 
-  const w = data.current;
+  const API_KEY = "c13a9d52a5f94490b54121129260102";
+  const CITY = "Boleslawiec";
 
-  document.getElementById("weather-box").innerHTML = `
-    <strong>Temperatura:</strong> ${w.temperature_2m}°C<br>
-    <strong>Wiatr:</strong> ${w.wind_speed_10m} km/h<br>
-    <strong>Opady:</strong> ${w.precipitation} mm<br>
-  `;
+  fetch(
+    `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${CITY}&days=1&aqi=no&alerts=no`
+  )
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data || !data.forecast) {
+        console.error("Błąd API:", data);
+        return;
+      }
+
+      const c = data.current;
+      const astro = data.forecast.forecastday[0].astro;
+
+      // ============================
+      // IKONA POGODY
+      // ============================
+      const weatherIcons = {
+        1000: "☀️", // Czyste
+        1003: "🌤️", // Częściowe zachmurzenie
+        1006: "☁️", // Znaczne zachmurzenie
+        1009: "🌥️", // Pochmurno
+        1030: "🌫️", // Mgła
+        1063: "🌦️", // Przelotny deszcz
+        1180: "🌧️", // Lekki deszcz
+        1195: "🌧️", // Ulewa
+        1210: "🌨️", // Lekkie opady śniegu
+        1225: "❄️", // Obfite opady śniegu
+        1276: "⛈️", // Burza z piorunami
+      };
+
+      const weatherIcon = weatherIcons[c.condition.code] || "🌡️";
+      document.getElementById("w-icon").textContent = weatherIcon;
+
+      // ============================
+      // IKONA KSIĘŻYCA
+      // ============================
+      const moonIcons = {
+        "New Moon": "🌑",
+        "Waxing Crescent": "🌒",
+        "First Quarter": "🌓",
+        "Waxing Gibbous": "🌔",
+        "Full Moon": "🌕",
+        "Waning Gibbous": "🌖",
+        "Last Quarter": "🌗",
+        "Waning Crescent": "🌘",
+      };
+
+      const moonIcon = moonIcons[astro.moon_phase] || "🌙";
+      document.getElementById("w-moon-icon").textContent = moonIcon;
+
+      // ============================
+      // DANE POGODOWE
+      // ============================
+      document.getElementById("w-temp").textContent = c.temp_c + "°C";
+      document.getElementById("w-feels").textContent = c.feelslike_c + "°C";
+      document.getElementById("w-wind").textContent = c.wind_kph + " km/h";
+      document.getElementById("w-winddir").textContent = c.wind_dir;
+      document.getElementById("w-pressure").textContent =
+        c.pressure_mb + " hPa";
+      document.getElementById("w-humidity").textContent = c.humidity + "%";
+      document.getElementById("w-cloud").textContent = c.cloud + "%";
+      document.getElementById("w-visibility").textContent = c.vis_km + " km";
+      document.getElementById("w-dew").textContent = c.dewpoint_c + "°C";
+
+      // ============================
+      // FAZA KSIĘŻYCA + BRANIA
+      // ============================
+
+      const moonPhasePL = {
+        "New Moon": "Nów",
+        "Waxing Crescent": "Przybywający sierp",
+        "First Quarter": "Pierwsza kwadra",
+        "Waxing Gibbous": "Przybywający garb",
+        "Full Moon": "Pełnia",
+        "Waning Gibbous": "Ubywający garb",
+        "Last Quarter": "Ostatnia kwadra",
+        "Waning Crescent": "Ubywający sierp",
+      };
+
+      document.getElementById("w-moon").textContent =
+        moonPhasePL[astro.moon_phase] || astro.moon_phase;
+
+      document.getElementById("w-fish").textContent = fishActivity(c, astro);
+
+      // ============================
+      // WYKRES
+      // ============================
+      drawWeatherHourlyChart(data.forecast.forecastday[0].hour);
+    })
+    .catch((err) => {
+      console.error("Błąd pobierania danych pogodowych:", err);
+    });
 }
-// =====================================
-// FAZA
-// =====================================
-async function loadMoon() {
-  const today = new Date().toISOString().split("T")[0];
-
-  const url = `https://api.weatherapi.com/v1/astronomy.json?key=c13a9d52a5f94490b54121129260102&q=Boleslawiec&dt=${today}`;
-
-  const res = await fetch(url);
-  const data = await res.json();
-
-  if (!data.astronomy || !data.astronomy.astro) {
-    document.getElementById("moon-box").innerHTML =
-      "Błąd pobierania danych księżyca.";
-    return;
-  }
-
-  const astro = data.astronomy.astro;
-
-  const phaseName = astro.moon_phase;
-  const illumination = astro.moon_illumination;
-
-  // Ikony dopasowane do nazw faz
-  const iconMap = {
-    "New Moon": "🌑",
-    "Waxing Crescent": "🌒",
-    "First Quarter": "🌓",
-    "Waxing Gibbous": "🌔",
-    "Full Moon": "🌕",
-    "Waning Gibbous": "🌖",
-    "Last Quarter": "🌗",
-    "Waning Crescent": "🌘",
-  };
-
-  const icon = iconMap[phaseName] || "🌙";
-
-  document.getElementById("moon-box").innerHTML = `
-    <div style="font-size:2rem">${icon}</div>
-    <strong>Faza:</strong> ${phaseName}<br>
-    <strong>Oświetlenie:</strong> ${illumination}%
-  `;
-}
 
 // =====================================
-// BRANIA
+// ALGORYTM AKTYWNOŚCI RYB
 // =====================================
-async function loadFishActivity() {
-  const today = new Date().toISOString().split("T")[0];
-
-  const weatherUrl = `https://api.weatherapi.com/v1/current.json?key=c13a9d52a5f94490b54121129260102&q=Boleslawiec`;
-
-  const moonUrl = `https://api.weatherapi.com/v1/astronomy.json?key=c13a9d52a5f94490b54121129260102&q=Boleslawiec&dt=${today}`;
-
-  try {
-    const [wRes, mRes] = await Promise.all([fetch(weatherUrl), fetch(moonUrl)]);
-
-    const w = await wRes.json();
-    const m = await mRes.json();
-
-    if (!w.current || !m.astronomy?.astro) {
-      document.getElementById("fish-box").innerHTML =
-        "Błąd pobierania kalendarza brań.";
-      return;
-    }
-
-    const temp = w.current.temp_c;
-    const wind = w.current.wind_kph;
-    const illumination = Number(m.astronomy.astro.moon_illumination) / 100;
-
-    const score = calculateFishActivity(temp, wind, illumination);
-
-    document.getElementById("fish-box").innerHTML = `
-      <div class="fish-stars">${"★".repeat(score)}${"☆".repeat(5 - score)}</div>
-    `;
-  } catch (err) {
-    document.getElementById("fish-box").innerHTML =
-      "Błąd pobierania kalendarza brań.";
-  }
-}
-
-function calculateFishActivity(temp, wind, moonPhase) {
+function fishActivity(c, astro) {
   let score = 0;
 
-  if (temp >= 8 && temp <= 20) score += 2;
-  if (wind <= 10) score += 1;
-  if (moonPhase > 0.45 && moonPhase < 0.65) score += 2;
+  if (astro.moon_illumination > 60) score++;
+  if (c.wind_kph < 15) score++;
+  if (c.pressure_mb > 1010) score++;
+  if (c.cloud < 60) score++;
 
-  return Math.min(score, 5);
+  return "★".repeat(score) + "☆".repeat(4 - score);
 }
+
+// =====================================
+// WYKRES TEMPERATURY
+// =====================================
+function drawWeatherHourlyChart(hours) {
+  const ctx = document.getElementById("w-hourly-chart");
+
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: hours.map((h) => h.time.split(" ")[1]),
+      datasets: [
+        {
+          label: "Temp °C",
+          data: hours.map((h) => h.temp_c),
+          borderColor: "#f4c542",
+          backgroundColor: "transparent",
+          borderWidth: 2,
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#888" } },
+        y: { ticks: { color: "#888" } },
+      },
+    },
+  });
+}
+
+// koniec testu
 
 // =====================================
 // GATUNKI
