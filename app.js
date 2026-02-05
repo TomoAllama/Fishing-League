@@ -72,6 +72,26 @@ function formatDate(dateString) {
 
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
 }
+// ====================================
+// SPRAWDZANIE POWIADOMIEŃ 
+// ====================================
+async function checkNewNotifications() {
+  const snap = await db.collection("notifications").get();
+
+  const dismissedSnap = await db
+    .collection("users")
+    .doc(currentUser.uid)
+    .collection("dismissedNotifications")
+    .get();
+
+  const dismissedIds = new Set();
+  dismissedSnap.forEach((doc) => dismissedIds.add(doc.id));
+
+  const hasNew = snap.docs.some((doc) => !dismissedIds.has(doc.id));
+
+  hasNewNotifications = hasNew;
+  updateBellIcon();
+}
 
 // =====================================
 // WIDOKI
@@ -97,6 +117,7 @@ function showApp() {
   if (currentUser.isAdmin) {
     loadInvites();
   }
+  checkNewNotifications();
 }
 
 function setActiveView(id) {
@@ -511,7 +532,7 @@ function openNotification(id) {
         .collection("dismissedNotifications")
         .doc(id)
         .set({ dismissedAt: new Date().toISOString() });
-      
+
       notifications = notifications.filter((n) => n.id !== id);
       renderNotifications();
     });
