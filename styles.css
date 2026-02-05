@@ -606,6 +606,7 @@ select:focus {
 #delete-notif:hover {
   color: #ff7777;
   transition: scale(1.15);
+  cursor: pointer;
 }
 
 #delete-notif:active {
