@@ -73,7 +73,9 @@ body {
 
 body {
   font-family: var(--font-main);
-  background: radial-gradient(circle at top, #282828 0, #020808 55%);
+  background: radial-gradient(circle at top, #242424 0, #020808 55%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--text);
   display: block;
   justify-content: center;
@@ -84,7 +86,7 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: url("logo1.jpg") no-repeat center center;
+  background: url("logo2.png") no-repeat center center;
   background-size: 60%;
   opacity: 0.12;
   pointer-events: none;
@@ -593,6 +595,7 @@ select:focus {
 #delete-notif-btn {
   background: none;
   border: none;
+  cursor: pointer;
   padding: 4px;
 }
 
