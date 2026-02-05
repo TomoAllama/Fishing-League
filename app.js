@@ -156,6 +156,14 @@ async function loadPendingCatches() {
     .where("approved", "==", false)
     .get();
 
+  // 🔥 Pobieramy użytkowników
+  const usersSnap = await db.collection("users").get();
+  const usersMap = {};
+  usersSnap.forEach(
+    (doc) => (usersMap[doc.id] = doc.data().displayId || doc.data().username)
+  );
+
+  // 🔥 Pobieramy gatunki (tego brakowało!)
   const speciesSnap = await db.collection("species").get();
   const speciesMap = {};
   speciesSnap.forEach((doc) => (speciesMap[doc.id] = doc.data().name));
@@ -168,6 +176,7 @@ async function loadPendingCatches() {
 
     tr.innerHTML = `
       <td>${c.date}</td>
+      <td>${usersMap[c.userId] || "?"}</td>
       <td>${speciesMap[c.speciesId] || "?"}</td>
       <td>${c.length}</td>
       <td>${c.weight}</td>
@@ -181,7 +190,6 @@ async function loadPendingCatches() {
           <button class="reject-btn delete-catch-btn" data-id="${doc.id}">
             <span class="material-icons delete-icon">delete</span>
           </button>
-
         </div>
       </td>
     `;
@@ -189,6 +197,7 @@ async function loadPendingCatches() {
     pendingCatchesBody.appendChild(tr);
   });
 
+  // 🔥 Rejestrujemy kliknięcia "zatwierdź"
   document.querySelectorAll(".approve-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.id;
