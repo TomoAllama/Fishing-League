@@ -73,7 +73,7 @@ function formatDate(dateString) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
 }
 // ====================================
-// SPRAWDZANIE POWIADOMIEŃ 
+// SPRAWDZANIE POWIADOMIEŃ
 // ====================================
 async function checkNewNotifications() {
   const snap = await db.collection("notifications").get();
@@ -118,6 +118,7 @@ function showApp() {
     loadInvites();
   }
   checkNewNotifications();
+  listenForNotifications();
 }
 
 function setActiveView(id) {
@@ -412,6 +413,44 @@ updateBellIcon();
 // ===============================
 // POWIADOMIENIA – FIRESTORE
 // ===============================
+function listenForNotifications() {
+  if (!currentUser) return;
+
+  db.collection("notifications")
+    .orderBy("date", "desc")
+    .onSnapshot(async (snap) => {
+      // Pobierz odrzucone powiadomienia użytkownika
+      const dismissedSnap = await db
+        .collection("users")
+        .doc(currentUser.uid)
+        .collection("dismissedNotifications")
+        .get();
+
+      const dismissedIds = new Set();
+      dismissedSnap.forEach((doc) => dismissedIds.add(doc.id));
+
+      // Zaktualizuj listę powiadomień
+      notifications = [];
+      snap.forEach((doc) => {
+        if (!dismissedIds.has(doc.id)) {
+          notifications.push({ id: doc.id, ...doc.data() });
+        }
+      });
+
+      // Odśwież listę w UI
+      renderNotifications();
+
+      // Jeśli użytkownik NIE jest w widoku powiadomień → pokaż czerwony dzwonek
+      const isInNotifView =
+        !document.getElementById("notifications-view").hidden;
+
+      if (!isInNotifView && notifications.length > 0) {
+        hasNewNotifications = true;
+        updateBellIcon();
+      }
+    });
+}
+
 async function loadNotifications() {
   if (!currentUser) return;
 
