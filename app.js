@@ -43,11 +43,35 @@ const speciesBody = document.getElementById("species-body");
 const generateTokenBtn = document.getElementById("generate-token-btn");
 const invitesBody = document.getElementById("invites-body");
 
+// powiadomienia
+const notifForm = document.getElementById("notif-form");
+
 // =====================================
 // STAN
 // =====================================
 let currentUser = null;
 let weatherWidgetLoaded = false;
+let notificationsWidgetLoaded = false;
+let hasNewNotifications = false;
+let notifications = [];
+let openedProfileUid = null;
+
+// =====================================
+// FORMAT DATY
+// =====================================
+
+function formatDate(dateString) {
+  const d = new Date(dateString);
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+}
 
 // =====================================
 // WIDOKI
@@ -58,8 +82,8 @@ function showAuth() {
 }
 
 function showApp() {
-  authView.hidden = true; // ukryj logowanie
-  appView.hidden = false; // pokaż aplikację
+  authView.hidden = true;
+  appView.hidden = false;
 
   currentUserLabel.textContent = `Zalogowano jako: ${
     currentUser.displayId || currentUser.username
@@ -79,6 +103,24 @@ function setActiveView(id) {
   viewSections.forEach((sec) => {
     sec.hidden = sec.id !== id;
   });
+}
+
+// opcjonalne, jeśli gdzieś używasz showView w HTML
+function showView(viewId) {
+  setActiveView(viewId);
+
+  if (viewId === "info-view") {
+    // jeśli masz te funkcje gdzieś indziej
+    if (typeof loadWeather === "function") loadWeather();
+    if (typeof loadMoon === "function") loadMoon();
+    if (typeof loadFishActivity === "function") loadFishActivity();
+  }
+
+  if (viewId === "notifications-view") {
+    hasNewNotifications = false;
+    updateBellIcon();
+    loadNotificationsWidget();
+  }
 }
 
 // ====================================
@@ -110,12 +152,16 @@ async function loadPendingCatches() {
       <td>${c.points}</td>
       <td>
         <div class="action-buttons">
-          <button class="approve-btn" data-id="${doc.id}">✔</button>
-          <button class="reject-btn" data-id="${doc.id}">✖</button>
+          <button class="approve-btn" data-id="${doc.id}">
+            <span class="material-icons approve-icon">thumb_up</span>
+          </button>
+      
+          <button class="reject-btn delete-catch-btn" data-id="${doc.id}">
+            <span class="material-icons delete-icon">delete</span>
+          </button>
+
         </div>
       </td>
-
-
     `;
 
     pendingCatchesBody.appendChild(tr);
@@ -127,18 +173,35 @@ async function loadPendingCatches() {
       await db.collection("catches").doc(id).update({ approved: true });
       loadPendingCatches();
       loadRanking();
+      loadUserCatches();
     });
   });
 }
+
 document.addEventListener("click", async (e) => {
-  const btn = e.target.closest(".reject-btn");
+  const btn = e.target.closest(".delete-catch-btn");
   if (!btn) return;
 
   const id = btn.dataset.id;
 
-  if (confirm("Na pewno odrzucić zgłoszenie?")) {
-    await db.collection("catches").doc(id).delete();
-    loadPendingCatches();
+  if (!confirm("Na pewno usunąć zgłoszenie?")) return;
+
+  await db.collection("catches").doc(id).delete();
+
+  // odświeżanie wszystkich miejsc, gdzie zgłoszenia mogą się pojawić
+  loadPendingCatches();
+  loadUserCatches();
+  loadRanking();
+
+  if (openedProfileUid) {
+    openUserProfile(openedProfileUid);
+  }
+
+  // jeśli jesteśmy w profilu użytkownika – odśwież profil
+  const profileView = document.getElementById("profile-view");
+  if (!profileView.hidden) {
+    const uid = document.querySelector(".user-card.active")?.dataset.uid;
+    if (uid) openUserProfile(uid);
   }
 });
 
@@ -244,71 +307,67 @@ logoutBtn.addEventListener("click", async () => {
 // =====================================
 // NAWIGACJA
 // =====================================
+
+// GŁÓWNE PRZYCISKI NAWIGACJI
 navButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
-    setActiveView(btn.dataset.view);
-    if (btn.dataset.view === "ranking-view") loadRanking();
-    if (btn.dataset.view === "admin-view" && currentUser?.isAdmin) {
+    const view = btn.dataset.view;
+    setActiveView(view);
+
+    if (view === "ranking-view") loadRanking();
+
+    if (view === "admin-view" && currentUser?.isAdmin) {
       loadInvites();
       loadSpecies();
       loadPendingCatches();
     }
-    if (btn.dataset.view === "users-view") loadUsers();
 
-    if (btn.dataset.view === "weather-widget-view") {
-      loadWeatherWidget();
+    if (view === "users-view") loadUsers();
+
+    if (view === "weather-widget-view") loadWeatherWidget();
+
+    if (view === "notifications-view") {
+      hasNewNotifications = false;
+      updateBellIcon();
+      loadNotificationsWidget();
     }
   });
 });
+
+// PŁYWAJĄCE PRZYCISKI (nav-circle)
 document.querySelectorAll(".nav-circle[data-view]").forEach((btn) => {
   btn.addEventListener("click", () => {
-    setActiveView(btn.dataset.view);
+    if (!currentUser) return;
 
-    if (btn.dataset.view === "weather-widget-view") {
-      loadWeatherWidget();
+    const view = btn.dataset.view;
+    setActiveView(view);
+
+    if (view === "weather-widget-view") loadWeatherWidget();
+
+    if (view === "notifications-view") {
+      hasNewNotifications = false;
+      updateBellIcon();
+      loadNotificationsWidget();
     }
   });
 });
 
-const folderButtons = document.querySelectorAll(".folder-btn");
-const adminBlocks = document.querySelectorAll(".admin-block");
+// =====================================
+// ZAKŁADKI W PANELU ADMINA (TOKENS / SPECIES)
+// =====================================
+const adminTabs = document.querySelectorAll(".folder-btn");
 
-folderButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const group = btn.dataset.group;
-    const targetId = btn.dataset.target;
-
-    // aktywny przycisk w danej grupie
-    folderButtons.forEach((b) => {
-      if (b.dataset.group === group) {
-        b.classList.toggle("active", b === btn);
-      }
-    });
-
-    // pokazujemy tylko kartę z danej grupy
-    adminBlocks.forEach((block) => {
-      if (block.dataset.group === group) {
-        block.hidden = block.id !== targetId;
-      }
-    });
-  });
-});
-
-const folderBtns = document.querySelectorAll(".folder-btn");
-
-folderBtns.forEach((btn) => {
+adminTabs.forEach((btn) => {
   btn.addEventListener("click", () => {
     const group = btn.dataset.group;
     const target = btn.dataset.target;
 
-    // aktywny przycisk w danej grupie
-    folderBtns.forEach((b) => {
+    adminTabs.forEach((b) => {
       if (b.dataset.group === group) {
         b.classList.toggle("active", b === btn);
       }
     });
 
-    // pokazuje tylko sekcje zakładek (NIE przyciski!)
     document
       .querySelectorAll(`.tab-section[data-group="${group}"]`)
       .forEach((sec) => {
@@ -317,22 +376,129 @@ folderBtns.forEach((btn) => {
   });
 });
 
-function showView(viewId) {
-  document.querySelectorAll(".view-section").forEach((sec) => {
-    sec.hidden = sec.id !== viewId;
+// ===============================
+// POWIADOMIENIA – STAN I IKONA
+// ===============================
+function updateBellIcon() {
+  const bell = document.getElementById("bell-icon");
+  if (!bell) return;
+  bell.classList.remove("new", "read");
+  bell.classList.add(hasNewNotifications ? "new" : "read");
+}
+
+updateBellIcon();
+
+// ===============================
+// POWIADOMIENIA – FIRESTORE
+// ===============================
+async function loadNotifications() {
+  const snap = await db
+    .collection("notifications")
+    .orderBy("date", "desc")
+    .get();
+
+  notifications = [];
+  snap.forEach((doc) => {
+    notifications.push({ id: doc.id, ...doc.data() });
   });
 
-  if (viewId === "info-view") {
-    loadWeather();
-    loadMoon();
-    loadFishActivity();
+  renderNotifications();
+}
+
+function loadNotificationsWidget() {
+  if (!notificationsWidgetLoaded) {
+    notificationsWidgetLoaded = true;
+
+    if (currentUser?.isAdmin) {
+      const panel = document.getElementById("notif-admin-panel");
+      if (panel) panel.hidden = false;
+    }
   }
+
+  loadNotifications();
+}
+
+// formularz dodawania powiadomień (admin)
+if (notifForm) {
+  notifForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById("notif-title").value.trim();
+    const body = document.getElementById("notif-body").value.trim();
+
+    if (!title || !body) return;
+
+    await db.collection("notifications").add({
+      title,
+      body,
+      date: new Date().toISOString(),
+    });
+
+    hasNewNotifications = true;
+    updateBellIcon();
+
+    notifForm.reset();
+    loadNotifications();
+  });
+}
+
+// ===============================
+// POWIADOMIENIA – RENDER
+// ===============================
+function renderNotifications() {
+  const list = document.getElementById("notifications-list");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  notifications.forEach((n) => {
+    const item = document.createElement("div");
+    item.classList.add("notif-item");
+    item.innerHTML = `
+      <h3>${n.title}</h3>
+      <p class="notif-date">${formatDate(n.date)}</p>
+    `;
+    item.addEventListener("click", () => openNotification(n.id));
+    list.appendChild(item);
+  });
+}
+
+function openNotification(id) {
+  const notif = notifications.find((n) => n.id === id);
+  if (!notif) return;
+
+  const list = document.getElementById("notifications-list");
+  if (!list) return;
+
+  list.innerHTML = `
+    <div class="notif-details">
+      <h3>${notif.title}</h3>
+      <p class="notif-date">${formatDate(notif.date)}</p>
+      <p>${notif.body}</p>
+
+      <div class="notif-actions">
+        <span id="delete-notif" class="material-icons">delete</span>
+        <button id="back-to-list">Powrót</button>
+      </div>
+    </div>
+  `;
+
+  document
+    .getElementById("delete-notif")
+    .addEventListener("click", async () => {
+      await db.collection("notifications").doc(id).delete();
+      notifications = notifications.filter((n) => n.id !== id);
+      renderNotifications();
+    });
+
+  document.getElementById("back-to-list").addEventListener("click", () => {
+    renderNotifications();
+  });
 }
 
 // ===============================
 // WIDŻET POGODA
 // ===============================
-
 function loadWeatherWidget() {
   if (weatherWidgetLoaded) return;
   weatherWidgetLoaded = true;
@@ -353,29 +519,23 @@ function loadWeatherWidget() {
       const c = data.current;
       const astro = data.forecast.forecastday[0].astro;
 
-      // ============================
-      // IKONA POGODY
-      // ============================
       const weatherIcons = {
-        1000: "☀️", // Czyste
-        1003: "🌤️", // Częściowe zachmurzenie
-        1006: "☁️", // Znaczne zachmurzenie
-        1009: "🌥️", // Pochmurno
-        1030: "🌫️", // Mgła
-        1063: "🌦️", // Przelotny deszcz
-        1180: "🌧️", // Lekki deszcz
-        1195: "🌧️", // Ulewa
-        1210: "🌨️", // Lekkie opady śniegu
-        1225: "❄️", // Obfite opady śniegu
-        1276: "⛈️", // Burza z piorunami
+        1000: "☀️",
+        1003: "🌤️",
+        1006: "☁️",
+        1009: "🌥️",
+        1030: "🌫️",
+        1063: "🌦️",
+        1180: "🌧️",
+        1195: "🌧️",
+        1210: "🌨️",
+        1225: "❄️",
+        1276: "⛈️",
       };
 
       const weatherIcon = weatherIcons[c.condition.code] || "🌡️";
       document.getElementById("w-icon").textContent = weatherIcon;
 
-      // ============================
-      // IKONA KSIĘŻYCA
-      // ============================
       const moonIcons = {
         "New Moon": "🌑",
         "Waxing Crescent": "🌒",
@@ -390,9 +550,6 @@ function loadWeatherWidget() {
       const moonIcon = moonIcons[astro.moon_phase] || "🌙";
       document.getElementById("w-moon-icon").textContent = moonIcon;
 
-      // ============================
-      // DANE POGODOWE
-      // ============================
       document.getElementById("w-temp").textContent = c.temp_c + "°C";
       document.getElementById("w-feels").textContent = c.feelslike_c + "°C";
       document.getElementById("w-wind").textContent = c.wind_kph + " km/h";
@@ -403,10 +560,6 @@ function loadWeatherWidget() {
       document.getElementById("w-cloud").textContent = c.cloud + "%";
       document.getElementById("w-visibility").textContent = c.vis_km + " km";
       document.getElementById("w-dew").textContent = c.dewpoint_c + "°C";
-
-      // ============================
-      // FAZA KSIĘŻYCA + BRANIA
-      // ============================
 
       const moonPhasePL = {
         "New Moon": "Nów",
@@ -424,9 +577,6 @@ function loadWeatherWidget() {
 
       document.getElementById("w-fish").textContent = fishActivity(c, astro);
 
-      // ============================
-      // WYKRES
-      // ============================
       drawWeatherHourlyChart(data.forecast.forecastday[0].hour);
     })
     .catch((err) => {
@@ -478,8 +628,6 @@ function drawWeatherHourlyChart(hours) {
     },
   });
 }
-
-// koniec testu
 
 // =====================================
 // GATUNKI
@@ -541,8 +689,6 @@ speciesForm.addEventListener("submit", async (e) => {
 catchForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  console.log("SUBMIT CATCH — currentUser:", currentUser);
-
   const speciesId = catchSpeciesSelect.value;
   const length = Number(catchLength.value);
   const weight = Number(catchWeight.value);
@@ -579,7 +725,6 @@ async function loadUserCatches() {
   const snap = await db
     .collection("catches")
     .where("userId", "==", currentUser.uid)
-
     .get();
 
   const speciesSnap = await db.collection("species").get();
@@ -597,7 +742,14 @@ async function loadUserCatches() {
       <td>${c.length.toFixed(1)}</td>
       <td>${c.weight.toFixed(2)}</td>
       <td>${c.points}</td>
-      <td>${c.approved ? "✔️" : "⏳"}</td>
+      <td>
+  ${
+    c.approved
+      ? `<span class="material-icons approve-icon">thumb_up</span>`
+      : `<span class="material-icons pending-icon">hourglass_empty</span>`
+  }
+</td>
+
     `;
     userCatchesBody.appendChild(tr);
   });
@@ -690,10 +842,8 @@ generateTokenBtn.addEventListener("click", () => {
 async function loadInvites() {
   const snap = await db.collection("invites").get();
 
-  // aktywne tokeny
   invitesBody.innerHTML = "";
 
-  // użyte tokeny
   const usedBody = document.getElementById("used-invites-body");
   usedBody.innerHTML = "";
 
@@ -704,18 +854,17 @@ async function loadInvites() {
     const token = doc.id;
     const link = `${baseUrl}?invite=${token}`;
 
-    // UŻYTE TOKENY
     if (data.used) {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${token}</td>
-        <td>${data.createdAt || "-"}</td>
+        <td>${data.createdAt ? formatDate(data.createdAt) : "-"}</td>
+
       `;
       usedBody.appendChild(tr);
-      return; // ważne: nie dodajemy ich do listy aktywnych
+      return;
     }
 
-    // AKTYWNE TOKENY
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${token}</td>
@@ -777,11 +926,11 @@ async function loadUsers() {
 }
 
 async function openUserProfile(uid) {
-  // pobieramy użytkownika
+  openedProfileUid = uid;
+
   const userDoc = await db.collection("users").doc(uid).get();
   const user = userDoc.data();
 
-  // pobieramy wszystkie zgłoszenia
   const catchesSnap = await db.collection("catches").get();
   const speciesSnap = await db.collection("species").get();
 
@@ -796,11 +945,9 @@ async function openUserProfile(uid) {
     }
   });
 
-  // liczymy punkty i zgłoszenia
   const totalPoints = catches.reduce((sum, c) => sum + c.points, 0);
   const count = catches.length;
 
-  // ranking
   const rankingSnap = await db.collection("catches").get();
   const totals = {};
 
@@ -817,7 +964,6 @@ async function openUserProfile(uid) {
 
   const rank = sorted.indexOf(uid) + 1;
 
-  // wypełniamy widok
   document.getElementById("profile-name").textContent = user.displayId;
   document.getElementById("profile-rank").textContent = rank || "-";
   document.getElementById("profile-points").textContent = totalPoints;
@@ -837,7 +983,12 @@ async function openUserProfile(uid) {
       <td>${c.points}</td>
       ${
         currentUser?.isAdmin
-          ? `<td><button class="delete-catch-btn" data-id="${c.id}" style="background:none;border:none;color:#d9534f;font-size:1.2rem;cursor:pointer;">🗑️</button></td>`
+          ? `<td>
+          <button class="delete-catch-btn" data-id="${c.id}">
+            <span class="material-icons delete-icon">delete</span>
+          </button>
+        </td>
+        `
           : ""
       }
     `;
@@ -845,22 +996,9 @@ async function openUserProfile(uid) {
     tbody.appendChild(tr);
 
     if (currentUser?.isAdmin) {
-      document.querySelectorAll(".delete-catch-btn").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const id = btn.dataset.id;
-
-          if (!confirm("Czy na pewno chcesz usunąć to zgłoszenie?")) return;
-
-          await db.collection("catches").doc(id).delete();
-
-          openUserProfile(uid); // odśwież profil po usunięciu
-          loadRanking(); // ranking musi się zaktualizować
-        });
-      });
     }
   });
 
-  // przełączamy widok
   setActiveView("profile-view");
 }
 
@@ -868,10 +1006,6 @@ async function openUserProfile(uid) {
 // START – NASŁUCH STANU AUTH
 // =====================================
 auth.onAuthStateChanged(async (user) => {
-  console.log("AUTH STATE CHANGED:", user);
-  console.log("CURRENT USER BEFORE:", currentUser);
-  console.log("STACK TRACE:", new Error().stack);
-
   if (user) {
     const userDoc = await db.collection("users").doc(user.uid).get();
 
