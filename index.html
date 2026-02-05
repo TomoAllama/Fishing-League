@@ -1,3 +1,5 @@
+<!--index-->
+
 <!DOCTYPE html>
 <html lang="pl">
   <head>
@@ -12,6 +14,9 @@
     <link rel="apple-touch-icon" sizes="120x120" href="icon-512.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+
   </head>
   <body>
     <main>
@@ -320,9 +325,8 @@
           </div>
         </section>
 
-        <!-- INFO PANEL -->
-        
-
+      <!-- INFO PANEL -->
+    
       <!-- WHEATHER WIDGET TEST-->
       <div class="nav-circle" data-view="weather-widget-view">🌤️</div>
 
@@ -363,6 +367,44 @@
           <canvas id="w-hourly-chart" height="80"></canvas>
         </div>
       </section>
+
+<!--POWIADOMIENIA GUZIK-->
+<div id="notifications-btn" class="nav-circle" data-view="notifications-view">
+  <span id="bell-icon" class="material-icons">notifications</span>
+</div>
+
+
+<!--POWIADOMIENIA KARTA-->
+
+<section id="notifications-view" class="view-section" hidden>
+  <div class="card">
+    <h2>Powiadomienia</h2>
+    <div id="notifications-list"></div>
+  </div>
+</section>
+
+<!--Pisanie powiadomień-->
+<section id="notifications-view" class="view-section" hidden>
+  <div class="card">
+    <h2>Powiadomienia</h2>
+
+    <!-- Tylko dla admina -->
+    <div id="notif-admin-panel" hidden>
+      <h3>Dodaj powiadomienie</h3>
+      <form id="notif-form">
+        <input type="text" id="notif-title" placeholder="Tytuł" required>
+        <textarea id="notif-body" placeholder="Treść" required></textarea>
+        <button type="submit" class="btn primary">Wyślij</button>
+      </form>
+      <hr>
+    </div>
+
+    <div id="notifications-list"></div>
+  </div>
+</section>
+
+
+
           </main>
 
     <!-- Firebase SDK -->
