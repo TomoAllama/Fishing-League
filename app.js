@@ -392,14 +392,32 @@ updateBellIcon();
 // POWIADOMIENIA – FIRESTORE
 // ===============================
 async function loadNotifications() {
+  if (!currentUser) return;
+
+  // Pobierz wszystkie powiadomienia
   const snap = await db
     .collection("notifications")
     .orderBy("date", "desc")
     .get();
 
+  // Pobierz odrzucone powiadomienia bieżącego użytkownika
+  const dismissedSnap = await db
+    .collection("users")
+    .doc(currentUser.uid)
+    .collection("dismissedNotifications")
+    .get();
+
+  const dismissedIds = new Set();
+  dismissedSnap.forEach((doc) => {
+    dismissedIds.add(doc.id);
+  });
+
   notifications = [];
   snap.forEach((doc) => {
-    notifications.push({ id: doc.id, ...doc.data() });
+    // Dodaj powiadomienie tylko jeśli nie zostało odrzucone
+    if (!dismissedIds.has(doc.id)) {
+      notifications.push({ id: doc.id, ...doc.data() });
+    }
   });
 
   renderNotifications();
@@ -486,7 +504,14 @@ function openNotification(id) {
   document
     .getElementById("delete-notif")
     .addEventListener("click", async () => {
-      await db.collection("notifications").doc(id).delete();
+      // Zamiast usunąć globalnie, oznacz jako odrzucone dla tego użytkownika
+      await db
+        .collection("users")
+        .doc(currentUser.uid)
+        .collection("dismissedNotifications")
+        .doc(id)
+        .set({ dismissedAt: new Date().toISOString() });
+      
       notifications = notifications.filter((n) => n.id !== id);
       renderNotifications();
     });
